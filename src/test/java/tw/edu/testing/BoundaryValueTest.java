@@ -1,94 +1,48 @@
 package tw.edu.testing;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Boundary Value Testing（邊界值測試，UT12 p28）：測試 {@link CourseRegistrationPolicy#calculateFee(int, boolean)}。
- * <p><b>明確定義有效範圍：</b>
- * <ul>
- *   <li>報名人數 (studentCount)：有效範圍為 [1, N] 人（請依 spec.md 填入實際上限 N，以下假設 N = 10）。</li>
- *   <li>無效範圍：studentCount &lt; 1（如 0、負數）或 studentCount &gt; N（超過人數上限）。</li>
- *   <li>課程類型 (advancedCourse)：false（標準課程每人 100，第 2 人起折 20）、true（進階課程每人 200，第 2 人起折 20）。</li>
- * </ul>
- * <p>測試涵蓋下界附近 (min-1, min, min+1) 與上界附近 (max-1, max, max+1)。
+ * Boundary Value 邊界值測試 (Software Testing UT12 p28)
+ *
+ * 【明確定義程式所用資料的有效範圍】
+ * 1. 報名人數 studentCount (整數): 有效範圍 [1, 30]
+ *    - 測試值: 0, 1, 2 (下界附近) 與 29, 30, 31 (上界附近)
+ * 2. 已修課程陣列 completedCourses 筆數: 有效筆數 [0, N] 筆 (定義 N = 5)
+ *    - 測試筆數: 0, 1 筆 與 4, 5, 6 筆 (N-1, N, N+1)
  */
-class CourseRegistrationBoundaryTest {
+public class CourseRegistrationBoundaryTest {
 
     private final CourseRegistrationPolicy policy = new CourseRegistrationPolicy();
 
-    // --- 下界附近測試 (min - 1, min, min + 1) ---
-
-    /**
-     * BV1：下界減 1 (min - 1 = 0 人，無效邊界附近值)。
-     * <ol>
-     *   <li>Input values: studentCount=0, advancedCourse=false.</li>
-     *   <li>Expected result: 0.</li>
-     *   <li>Test program's result: printed below.</li>
-     *   <li>Criteria analysis: Lower boundary - 1 (0 筆資料).</li>
-     * </ol>
-     */
+    // 1. 整數有效範圍 [1, 30] 的邊界值與附近值 (0, 1, 2 與 29, 30, 31)
     @Test
-    void givenZeroStudents_whenCalculateFee_then0() {
-        long actual = policy.calculateFee(0, false);
-        System.out.println("BV1 (min-1=0): actual=" + actual);
-        assertEquals(0L, actual);
+    void testStudentCountBoundaryValues() {
+        // 下界附近: 0, 1, 2
+        assertEquals(0L, policy.calculateFee(0, false));     // min - 1 (無效)
+        assertEquals(100L, policy.calculateFee(1, false));   // min     (有效下界)
+        assertEquals(180L, policy.calculateFee(2, false));   // min + 1 (有效下界附近，觸發折扣)
+
+        // 上界附近: 29, 30, 31
+        assertEquals(2340L, policy.calculateFee(29, false)); // max - 1 (有效上界附近)
+        assertEquals(2420L, policy.calculateFee(30, false)); // max     (有效上界)
+        assertEquals(2500L, policy.calculateFee(31, false)); // max + 1 (超出定義有效上限)
     }
 
-    /**
-     * BV2：下界值 (min = 1 人，有效邊界值)。
-     */
+    // 2. 資料有效筆數 [0, 5] 筆的邊界值與附近值 (0, 1 筆 與 4, 5, 6 筆)
     @Test
-    void givenOneStudent_whenCalculateFee_then100() {
-        long actual = policy.calculateFee(1, false);
-        System.out.println("BV2 (min=1): actual=" + actual);
-        assertEquals(100L, actual);
-    }
+    void testCompletedCoursesCountBoundaryValues() {
+        // 0 筆資料
+        assertFalse(policy.canEnroll(true, false, new String[]{}));
+        // 1 筆資料
+        assertTrue(policy.canEnroll(true, false, new String[]{"Programming"}));
 
-    /**
-     * BV3：下界加 1 (min + 1 = 2 人，有效邊界附近值)。
-     */
-    @Test
-    void givenTwoStudents_whenCalculateFee_then180() {
-        long actual = policy.calculateFee(2, false);
-        System.out.println("BV3 (min+1=2): actual=" + actual);
-        assertEquals(180L, actual);
-    }
-
-    // --- 上界附近測試 (max - 1, max, max + 1，假設上限 N = 10，請依 spec.md 調整) ---
-
-    /**
-     * BV4：上界減 1 (max - 1 = N - 1 人，有效邊界附近值)。
-     */
-    @Test
-    void givenMaxMinusOneStudents_whenCalculateFee_thenValid() {
-        int n = 10; // 請依 spec.md 的實際上限修改
-        long expected = 100L + (n - 2) * 80L;
-        long actual = policy.calculateFee(n - 1, false);
-        System.out.println("BV4 (max-1=" + (n - 1) + "): actual=" + actual);
-        assertEquals(expected, actual);
-    }
-
-    /**
-     * BV5：上界值 (max = N 人，有效邊界值)。
-     */
-    @Test
-    void givenMaxStudents_whenCalculateFee_thenValid() {
-        int n = 10; // 請依 spec.md 的實際上限修改
-        long expected = 100L + (n - 2) * 80L;
-        long actual = policy.calculateFee(n, false);
-        System.out.println("BV5 (max=" + n + "): actual=" + actual);
-        assertEquals(expected, actual);
-    }
-
-    /**
-     * BV6：上界加 1 (max + 1 = N + 1 人，無效邊界附近值)。
-     */
-    @Test
-    void givenMaxPlusOneStudents_whenCalculateFee_thenInvalid() {
-        int n = 10; // 請依 spec.md 的實際上限修改
-        // 請依 spec.md 確認超過上限 N 時是回傳 0、上限費用或拋出 IllegalArgumentException
-        long actual = policy.calculateFee(n + 1, false);
-        System.out.println("BV6 (max+1=" + (n + 1) + "): actual=" + actual);
+        // N - 1 = 4 筆資料
+        assertTrue(policy.canEnroll(true, false, new String[]{"C1", "C2", "C3", "Programming"}));
+        // N = 5 筆資料
+        assertTrue(policy.canEnroll(true, false, new String[]{"C1", "C2", "C3", "C4", "Programming"}));
+        // N + 1 = 6 筆資料
+        assertTrue(policy.canEnroll(true, false, new String[]{"C1", "C2", "C3", "C4", "C5", "Programming"}));
     }
 }
