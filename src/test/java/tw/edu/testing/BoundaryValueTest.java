@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 2. 已修課程陣列 completedCourses 筆數: 有效筆數 [0, N] 筆 (定義 N = 5)
  *    - 測試筆數: 0, 1 筆 與 4, 5, 6 筆 (N-1, N, N+1)
  */
-public class CourseRegistrationBoundaryTest {
+public class BoundaryValueTest {
 
     private final CourseRegistrationPolicy policy = new CourseRegistrationPolicy();
 
